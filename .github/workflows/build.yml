@@ -19,44 +19,50 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Setup NDK
+      - name: Install NDK
         run: |
-          sdkmanager --install "ndk;26.1.10909125" || sdkmanager --install "ndk;26.3.11579264" || true
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$(ls $ANDROID_HOME/ndk | head -1)" >> $GITHUB_ENV
+          yes | sdkmanager --licenses || true
+          sdkmanager "ndk;26.1.10909125" || sdkmanager "ndk;27.0.12077973" || true
+          ls "$ANDROID_HOME/ndk" || true
+          NDK_DIR=$(ls -d $ANDROID_HOME/ndk/* 2>/dev/null | head -1)
+          if [ -n "$NDK_DIR" ]; then
+            echo "ANDROID_NDK_HOME=$NDK_DIR" >> $GITHUB_ENV
+            # Align gradle.properties ndkVersion with installed NDK
+            NDK_VER=$(basename "$NDK_DIR")
+            sed -i "s/^ndkVersion=.*/ndkVersion=$NDK_VER/" gradle.properties || true
+            echo "Using NDK $NDK_VER"
+          fi
 
       - name: Fetch Termux terminal modules (complete sources)
         run: |
           set -e
           git clone --depth 1 https://github.com/termux/termux-app.git /tmp/termux-app
-          rm -rf terminal-emulator/src
-          rm -rf terminal-view/src
+          rm -rf terminal-emulator/src terminal-view/src
           cp -a /tmp/termux-app/terminal-emulator/src terminal-emulator/
           cp -a /tmp/termux-app/terminal-view/src terminal-view/
-          echo "Modules ready:"
+          echo "Module files:"
           find terminal-emulator/src terminal-view/src -type f | wc -l
-
-      - name: Create Gradle Wrapper if missing
-        run: |
-          if [ ! -f gradlew ]; then
-            gradle wrapper --gradle-version 8.7 || true
-          fi
-          chmod +x gradlew || true
 
       - name: Build Debug APK
         run: |
-          if [ -f gradlew ]; then
-            ./gradlew :app:assembleDebug --no-daemon --stacktrace
-          else
-            gradle :app:assembleDebug --no-daemon --stacktrace
+          # setup-gradle provides gradle; generate wrapper if absent
+          if [ ! -f gradlew ]; then
+            gradle wrapper --gradle-version 8.7
           fi
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: app-debug
-          path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: ignore
+          path: |
+            app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
