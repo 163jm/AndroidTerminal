@@ -1,54 +1,50 @@
 # Android Terminal
 
-一个简单的 Android 终端模拟器 APK，风格参考 MT 管理器终端。
+持续会话式 Android 终端模拟器（接近常规终端体验）。
 
-## 功能
+## 与上一版的区别
 
-- 本地 shell 命令执行
-- 内置常用命令：`ls`、`cd`、`pwd`、`cat`、`echo`、`help` 等
-- 支持通过系统 `sh` 执行更多命令
-- 绿色终端风格界面
-- 命令历史记录
+| 点 | 旧版 | 新版 |
+|----|------|------|
+| 会话 | 每次命令新建进程 | **常驻 shell 进程**，连续会话 |
+| 输出 | 等命令结束后一次显示 | **实时流式输出** |
+| 输入 | 点按钮执行 | 回车直接发送到 shell stdin |
+| 中断 | 无 | 支持发送 Ctrl+C |
+| 清屏 | 有 | 有（按钮 / `clear`） |
 
-## 编译方法
+## 使用方式
 
-### 方法一：Android Studio
+1. 打开 App → 自动启动交互式 shell（`/system/bin/sh -i`）
+2. 在底部输入命令，按 **回车** 或点「发送」
+3. 输出会实时出现在上方绿色终端区
+4. 「Ctrl+C」尝试中断当前命令
+5. 「清屏」或输入 `clear` 清空屏幕
+6. 输入 `exit` 会结束当前会话（会自动重启）
 
-1. 用 Android Studio 打开本项目
-2. 等待 Gradle 同步完成
-3. 点击 Run 或 Build → Build Bundle(s) / APK(s) → Build APK(s)
+## 限制（重要）
 
-### 方法二：命令行
+当前实现 **没有真实 PTY（伪终端）**：
+
+- `vi` / `nano` / `top` / `htop` 等全屏交互程序体验差或不可用
+- 需要密码输入的 `ssh` / `su` 交互可能异常
+- 颜色 / 光标定位等 ANSI 序列被简单过滤
+
+若需要完整终端体验（PTY + VT100 + 包管理），请使用：
+
+- [Termux](https://termux.dev/)
+- [ZeroAicy/MTermEx](https://github.com/ZeroAicy/MTermEx)（MT 风格扩展）
+
+## 编译
+
+用 **Android Studio** 打开本仓库 → Sync → Run / Build APK。
+
+命令行（需先生成 gradle wrapper）：
 
 ```bash
-chmod +x gradlew
 ./gradlew assembleDebug
 ```
 
-生成的 APK 位于：`app/build/outputs/apk/debug/app-debug.apk`
-
-### 方法三：GitHub Actions（推荐）
-
-推送代码后可在仓库的 Actions 页面自动编译，或手动触发。
-
-## 注意事项
-
-1. **这不是 MT 管理器官方终端扩展包**（`bin.mt.termex`）。官方扩展包是闭源的，且专门适配 MT 管理器内部终端环境。
-2. 本项目是**独立终端 APK**，可直接安装使用。
-3. 无 root 权限时，很多系统命令（如修改系统文件）会失败，这是 Android 安全限制。
-4. 如果需要完整的 Linux 环境 + 大量工具（类似 MT 终端扩展包的效果），强烈推荐使用：
-   - [Termux](https://termux.dev/)（最强大）
-   - [ZeroAicy/MTermEx](https://github.com/ZeroAicy/MTermEx)（非官方 MT 终端扩展，基于 Termux 环境）
-
-## 与 MT 终端扩展包的对比
-
-| 特性 | 本项目 | MT 官方终端扩展包 |
-|------|--------|------------------|
-| 类型 | 独立 APK | MT 管理器扩展包 |
-| 命令数量 | 基础 + 系统 shell | bash + coreutils + ssh/curl 等大量工具 |
-| 安装方式 | 普通安装 | 需在 MT 内安装扩展 |
-| 开源 | 是 | 否 |
-| 适用场景 | 学习 / 简单终端 | 重度玩机 / 逆向 |
+APK 路径：`app/build/outputs/apk/debug/app-debug.apk`
 
 ## License
 
