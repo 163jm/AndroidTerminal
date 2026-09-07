@@ -22,16 +22,35 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew || true
+      - name: Setup NDK
+        run: |
+          sdkmanager --install "ndk;26.1.10909125" || sdkmanager --install "ndk;26.3.11579264" || true
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$(ls $ANDROID_HOME/ndk | head -1)" >> $GITHUB_ENV
+
+      - name: Fetch Termux terminal modules (complete sources)
+        run: |
+          set -e
+          git clone --depth 1 https://github.com/termux/termux-app.git /tmp/termux-app
+          rm -rf terminal-emulator/src
+          rm -rf terminal-view/src
+          cp -a /tmp/termux-app/terminal-emulator/src terminal-emulator/
+          cp -a /tmp/termux-app/terminal-view/src terminal-view/
+          echo "Modules ready:"
+          find terminal-emulator/src terminal-view/src -type f | wc -l
+
+      - name: Create Gradle Wrapper if missing
+        run: |
+          if [ ! -f gradlew ]; then
+            gradle wrapper --gradle-version 8.7 || true
+          fi
+          chmod +x gradlew || true
 
       - name: Build Debug APK
         run: |
           if [ -f gradlew ]; then
-            ./gradlew assembleDebug --no-daemon
+            ./gradlew :app:assembleDebug --no-daemon --stacktrace
           else
-            echo "No gradlew, using system gradle"
-            gradle assembleDebug --no-daemon || true
+            gradle :app:assembleDebug --no-daemon --stacktrace
           fi
 
       - name: Upload APK
