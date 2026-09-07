@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Android Terminal</string>
-    <string name="hint_input">输入命令…</string>
-    <string name="btn_run">执行</string>
-    <string name="btn_clear">清空</string>
-    <string name="welcome">Android Terminal v1.0\n类似 MT 管理器终端的简易实现\n输入 help 查看可用命令\n\n</string>
+    <string name="hint_input">输入命令，回车发送</string>
 </resources>
