@@ -1,51 +1,32 @@
-# Android Terminal
+# Android Terminal (PTY)
 
-持续会话式 Android 终端模拟器（接近常规终端体验）。
+基于 **Termux `terminal-emulator` + `terminal-view`** 的真实伪终端 APK。
 
-## 与上一版的区别
+## 体验
 
-| 点 | 旧版 | 新版 |
-|----|------|------|
-| 会话 | 每次命令新建进程 | **常驻 shell 进程**，连续会话 |
-| 输出 | 等命令结束后一次显示 | **实时流式输出** |
-| 输入 | 点按钮执行 | 回车直接发送到 shell stdin |
-| 中断 | 无 | 支持发送 Ctrl+C |
-| 清屏 | 有 | 有（按钮 / `clear`） |
+- **全屏终端**，没有底部输入框
+- 键盘直接写入 **真实 PTY**
+- 支持颜色、光标、滚动、双指缩放字体
+- 点击屏幕弹出软键盘
+- Shell 退出后自动重启会话
 
-## 使用方式
+## 架构
 
-1. 打开 App → 自动启动交互式 shell（`/system/bin/sh -i`）
-2. 在底部输入命令，按 **回车** 或点「发送」
-3. 输出会实时出现在上方绿色终端区
-4. 「Ctrl+C」尝试中断当前命令
-5. 「清屏」或输入 `clear` 清空屏幕
-6. 输入 `exit` 会结束当前会话（会自动重启）
-
-## 限制（重要）
-
-当前实现 **没有真实 PTY（伪终端）**：
-
-- `vi` / `nano` / `top` / `htop` 等全屏交互程序体验差或不可用
-- 需要密码输入的 `ssh` / `su` 交互可能异常
-- 颜色 / 光标定位等 ANSI 序列被简单过滤
-
-若需要完整终端体验（PTY + VT100 + 包管理），请使用：
-
-- [Termux](https://termux.dev/)
-- [ZeroAicy/MTermEx](https://github.com/ZeroAicy/MTermEx)（MT 风格扩展）
-
-## 编译
-
-用 **Android Studio** 打开本仓库 → Sync → Run / Build APK。
-
-命令行（需先生成 gradle wrapper）：
-
-```bash
-./gradlew assembleDebug
+```
+app/                  # 本应用
+terminal-emulator/    # Termux PTY + VT 解析（含 JNI）
+terminal-view/        # Termux 终端渲染 View
 ```
 
-APK 路径：`app/build/outputs/apk/debug/app-debug.apk`
+当前启动系统 `/system/bin/sh`。后续可接 bootstrap / Extra Keys / 多会话。
+
+## 编译要求
+
+1. Android Studio + **NDK**（含 native 代码）
+2. Sync 后编译 `libtermux.so`
+3. 若 NDK 版本不符，改 `gradle.properties` 中 `ndkVersion`
 
 ## License
 
-MIT
+- 本应用：MIT
+- terminal-emulator / terminal-view：Apache-2.0（termux/termux-app）
